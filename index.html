@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Segundo Cérebro · IA Offline</title>
+  <style>
+    /* ===== Design Tokens (Variáveis) ===== */
+    :root {
+      --bg: #0f0f14;
+      --card: #1c1c24;
+      --card-hover: #252530;
+      --line: #2a2a36;
+      --accent: #7c5cff;
+      --accent-soft: #7c5cff22;
+      --accent-hover: #9178ff;
+      --text: #f0f0f5;
+      --sub: #8b8b98;
+      --radius-sm: 10px;
+      --radius-md: 18px;
+      --radius-lg: 24px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.3);
+      --transition: 0.2s ease;
+    }
+
+    /* ===== Reset e Base ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== Barra Superior ===== */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .header-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: var(--sub);
+      font-weight: 400;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--sub);
+      font-size: 22px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .icon-btn:hover {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    /* ===== Área do Chat ===== */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+
+    /* Estado vazio */
+    .empty-state {
+      margin: auto;
+      text-align: center;
+      color: var(--sub);
+      font-size: 14px;
+      padding: 30px 20px;
+    }
+
+    .empty-state .icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+      opacity: 0.7;
+    }
+
+    .empty-state b {
+      color: var(--text);
+      display: block;
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    .empty-state p {
+      line-height: 1.5;
+    }
+
+    /* Mensagens */
+    .message {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+      border-bottom-right-radius: 6px;
+    }
+
+    .message.ia {
+      align-self: flex-start;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-bottom-left-radius: 6px;
+    }
+
+    /* Indicador de pensamento */
+    .thinking-indicator {
+      align-self: flex-start;
+      color: var(--sub);
+      font-size: 13px;
+      padding: 8px 16px;
+      display: flex;
+      gap: 4px;
+    }
+
+    .thinking-dots span {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--sub);
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+
+    .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ===== Barra de Entrada ===== */
+    .input-bar {
+      flex-shrink: 0;
+      padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+      border-top: 1px solid var(--line);
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      background: var(--bg);
+    }
+
+    .input-bar textarea {
+      flex: 1;
+      resize: none;
+      max-height: 110px;
+      padding: 12px 16px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .input-bar textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .circle-btn {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition), border-color var(--transition), transform 0.1s ease;
+    }
+
+    .circle-btn:active { transform: scale(0.94); }
+
+    .circle-btn.send-btn {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .circle-btn.send-btn:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .circle-btn:disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .circle-btn.recording {
+      background: #ff5c7a;
+      border-color: #ff5c7a;
+      color: #fff;
+      animation: pulse-rec 1.5s infinite;
+    }
+
+    @keyframes pulse-rec {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,92,122,0.5); }
+      50% { box-shadow: 0 0 0 12px rgba(255,92,122,0); }
+    }
+
+    /* ===== Painel Lateral (Configurações) ===== */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 20;
+      display: none;
+      backdrop-filter: blur(2px);
+    }
+
+    .overlay.open { display: block; }
+
+    .side-panel {
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 88%;
+      max-width: 380px;
+      background: var(--bg);
+      border-left: 1px solid var(--line);
+      z-index: 21;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .side-panel.open { transform: translateX(0); }
+
+    .side-panel h2 {
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    .side-panel .hint {
+      font-size: 12px;
+      color: var(--sub);
+      line-height: 1.5;
+    }
+
+    .side-panel input[type="file"] {
+      width: 100%;
+      font-size: 12.5px;
+      color: var(--sub);
+    }
+
+    .side-panel select {
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .side-panel button {
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .side-panel button:hover {
+      background: var(--card-hover);
+    }
+
+    .side-panel button.primary-btn {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .side-panel button.primary-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--card);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 3px;
+    }
+
+    .status-text {
+      font-size: 12px;
+      color: var(--sub);
+      min-height: 16px;
+    }
+
+    .materials-list {
+      font-size: 12px;
+      color: var(--sub);
+      line-height: 1.6;
+      word-break: break-all;
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 4px 0;
+    }
+
+    .toggle-row span {
+      font-size: 14px;
+    }
+
+    .toggle-pill {
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      color: var(--sub);
+    }
+
+    .toggle-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .close-panel-row {
+      display: flex;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== CABEÇALHO ==================== -->
+  <header class="app-header">
+    <div class="header-info">
+      <div class="header-title">🧠 Segundo Cérebro</div>
+      <div class="header-subtitle" id="topModelStatus">Nenhum modelo carregado</div>
+    </div>
+    <button class="icon-btn" id="openPanelBtn" title="Configurações">⚙️</button>
+  </header>
+
+  <!-- ==================== CHAT ==================== -->
+  <main class="chat-area" id="chatWindow">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">💬</div>
+      <b>Sua IA offline</b>
+      <p>Toque em ⚙️ para carregar o modelo do pendrive.<br>Depois é só conversar aqui, por texto ou voz.</p>
+    </div>
+  </main>
+
+  <!-- ==================== BARRA DE ENTRADA ==================== -->
+  <div class="input-bar">
+    <textarea id="chatInput" placeholder="Digite uma mensagem ou use o microfone..." rows="1"></textarea>
+    <button class="circle-btn" id="micBtn" title="Gravar voz">🎤</button>
+    <button class="circle-btn send-btn" id="sendBtn" title="Enviar">➤</button>
+  </div>
+
+  <!-- ==================== PAINEL LATERAL ==================== -->
+  <div class="overlay" id="overlay"></div>
+  <div class="side-panel" id="sidePanel">
+    <div class="close-panel-row">
+      <button class="icon-btn" id="closePanelBtn">✕</button>
+    </div>
+
+    <!-- Seção: Modelo GGUF -->
+    <h2>📦 Modelo (GGUF)</h2>
+    <p class="hint">Escolha o arquivo do pendrive. O modelo é carregado apenas na memória do navegador, sem envio à internet.</p>
+    <input type="file" id="modelFileInput" accept=".gguf">
+    <button class="primary-btn" id="loadModelBtn" disabled>Carregar modelo</button>
+    <button id="testModelBtn">🧪 Testar com modelo pequeno de exemplo</button>
+    <div class="progress-bar"><div class="progress-fill" id="modelProgress"></div></div>
+    <div class="status-text" id="modelStatus">Nenhum modelo carregado.</div>
+
+    <!-- Seção: Materiais -->
+    <h2>📚 Materiais (ensinar a IA)</h2>
+    <p class="hint">Arquivos .txt / .md do pendrive. A IA busca trechos relacionados à sua pergunta para responder com mais contexto.</p>
+    <input type="file" id="materialsInput" accept=".txt,.md" multiple>
+    <div class="materials-list" id="materialsList">Nenhum material carregado.</div>
+    <button id="clearMaterialsBtn">🗑️ Limpar materiais</button>
+
+    <!-- Seção: Voz -->
+    <h2>🔊 Voz</h2>
+    <select id="voiceSelect"></select>
+    <button id="testVoiceBtn">Testar voz</button>
+    <div class="toggle-row">
+      <span>Ler respostas em voz alta</span>
+      <button class="toggle-pill" id="autoVoiceToggle">OFF</button>
+    </div>
+  </div>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script type="module">
+    import { Wllama } from 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2/esm/index.js';
+    import WasmFromCDN from 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2/esm/wasm-from-cdn.js';
+
+    // ==================== Referências ao DOM ====================
+    const sidePanel = document.getElementById('sidePanel');
+    const overlay = document.getElementById('overlay');
+    const openPanelBtn = document.getElementById('openPanelBtn');
+    const closePanelBtn = document.getElementById('closePanelBtn');
+    const chatWindow = document.getElementById('chatWindow');
+    const emptyState = document.getElementById('emptyState');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const micBtn = document.getElementById('micBtn');
+
+    const modelFileInput = document.getElementById('modelFileInput');
+    const loadModelBtn = document.getElementById('loadModelBtn');
+    const testModelBtn = document.getElementById('testModelBtn');
+    const modelProgress = document.getElementById('modelProgress');
+    const modelStatus = document.getElementById('modelStatus');
+    const topModelStatus = document.getElementById('topModelStatus');
+
+    const materialsInput = document.getElementById('materialsInput');
+    const materialsList = document.getElementById('materialsList');
+    const clearMaterialsBtn = document.getElementById('clearMaterialsBtn');
+
+    const voiceSelect = document.getElementById('voiceSelect');
+    const testVoiceBtn = document.getElementById('testVoiceBtn');
+    const autoVoiceToggle = document.getElementById('autoVoiceToggle');
+
+    // ==================== Controle do Painel ====================
+    function openPanel() {
+      sidePanel.classList.add('open');
+      overlay.classList.add('open');
+    }
+
+    function closePanel() {
+      sidePanel.classList.remove('open');
+      overlay.classList.remove('open');
+    }
+
+    openPanelBtn.addEventListener('click', openPanel);
+    closePanelBtn.addEventListener('click', closePanel);
+    overlay.addEventListener('click', closePanel);
+
+    // Fechar painel ao pressionar ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePanel();
+    });
+
+    // ==================== Gerenciamento da IA (Wllama) ====================
+    const wllama = new Wllama(WasmFromCDN);
+    let modelLoaded = false;
+    let selectedModelFile = null;
+
+    modelFileInput.addEventListener('change', () => {
+      selectedModelFile = modelFileInput.files[0] || null;
+      loadModelBtn.disabled = !selectedModelFile;
+    });
+
+    async function loadModelFromFile(file) {
+      modelStatus.textContent = 'Carregando...';
+      topModelStatus.textContent = 'Carregando modelo...';
+      loadModelBtn.disabled = true;
+
+      try {
+        const url = URL.createObjectURL(file);
+
+        await wllama.loadModelFromUrl(url, {
+          progressCallback: ({ loaded, total }) => {
+            const percent = Math.round((loaded / total) * 100);
+            modelProgress.style.width = `${percent}%`;
+            modelStatus.textContent = `Carregando... ${percent}%`;
+          }
+        });
+
+        URL.revokeObjectURL(url);
+        modelLoaded = true;
+        modelStatus.textContent = `✅ Carregado: ${file.name}`;
+        topModelStatus.textContent = file.name;
+      } catch (err) {
+        modelStatus.textContent = `❌ Erro: ${err.message}`;
+        topModelStatus.textContent = 'Erro ao carregar';
+        console.error(err);
+      } finally {
+        loadModelBtn.disabled = false;
+      }
+    }
+
+    loadModelBtn.addEventListener('click', () => {
+      if (selectedModelFile) loadModelFromFile(selectedModelFile);
+    });
+
+    testModelBtn.addEventListener('click', async () => {
+      modelStatus.textContent = 'Baixando modelo de teste...';
+      topModelStatus.textContent = 'Baixando teste...';
+
+      try {
+        await wllama.loadModelFromUrl(
+          'https://huggingface.co/ggml-org/models/resolve/main/tinyllamas/stories260K.gguf',
+          {
+            progressCallback: ({ loaded, total }) => {
+              const percent = Math.round((loaded / total) * 100);
+              modelProgress.style.width = `${percent}%`;
+              modelStatus.textContent = `Baixando teste... ${percent}%`;
+            }
+          }
+        );
+
+        modelLoaded = true;
+        modelStatus.textContent = '✅ Modelo de teste carregado';
+        topModelStatus.textContent = 'Modelo de teste';
+      } catch (err) {
+        modelStatus.textContent = `❌ Erro: ${err.message}`;
+        console.error(err);
+      }
+    });
+
+    // ==================== Gerenciamento de Materiais ====================
+    let materials = [];
+
+    function updateMaterialsList() {
+      materialsList.textContent = materials.length
+        ? materials.map(m => `• ${m.name}`).join('\n')
+        : 'Nenhum material carregado.';
+    }
+
+    materialsInput.addEventListener('change', async () => {
+      for (const file of materialsInput.files) {
+        materials.push({ name: file.name, content: await file.text() });
+      }
+      updateMaterialsList();
+    });
+
+    clearMaterialsBtn.addEventListener('click', () => {
+      materials = [];
+      updateMaterialsList();
+    });
+
+    /**
+     * Busca trechos relevantes nos materiais com base na pergunta do usuário.
+     * Utiliza um algoritmo simples de similaridade por palavras-chave.
+     */
+    function searchContext(question, maxExcerpts = 3) {
+      const keywords = question.toLowerCase().split(/\W+/).filter(w => w.length > 3);
+      if (!keywords.length || !materials.length) return '';
+
+      const excerpts = [];
+
+      materials.forEach(material => {
+        material.content.split(/\n{1,}/).forEach(paragraph => {
+          if (paragraph.trim().length < 20) return;
+
+          const lower = paragraph.toLowerCase();
+          let score = 0;
+          keywords.forEach(word => {
+            if (lower.includes(word)) score++;
+          });
+
+          if (score > 0) excerpts.push({ text: paragraph, score, source: material.name });
+        });
+      });
+
+      excerpts.sort((a, b) => b.score - a.score);
+      return excerpts.slice(0, maxExcerpts)
+        .map(e => `(De ${e.source}) ${e.text}`)
+        .join('\n\n');
+    }
+
+    // ==================== Chat ====================
+    let chatHistory = [];
+
+    // Ajusta altura do textarea automaticamente
+    chatInput.addEventListener('input', () => {
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 110) + 'px';
+    });
+
+    function addMessage(text, sender) {
+      if (emptyState) emptyState.remove();
+
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
+      msgDiv.textContent = text;
+      chatWindow.appendChild(msgDiv);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      return msgDiv;
+    }
+
+    function showThinkingIndicator() {
+      const div = document.createElement('div');
+      div.className = 'thinking-indicator';
+      div.innerHTML = 'Pensando <span class="thinking-dots"><span></span><span></span><span></span></span>';
+      chatWindow.appendChild(div);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      return div;
+    }
+
+    async function sendMessage() {
+      const question = chatInput.value.trim();
+      if (!question) return;
+
+      // Se não há modelo carregado, abre o painel para o usuário carregar
+      if (!modelLoaded) {
+        openPanel();
+        return;
+      }
+
+      // Adiciona mensagem do usuário
+      addMessage(question, 'user');
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+      sendBtn.disabled = true;
+
+      // Indicador de pensamento
+      const thinkingEl = showThinkingIndicator();
+
+      // Busca contexto dos materiais
+      const context = searchContext(question);
+
+      // Monta array de mensagens para a IA
+      const messages = [];
+      if (context) {
+        messages.push({
+          role: 'system',
+          content: `Use estes trechos dos materiais do usuário se forem úteis:\n\n${context}`
+        });
+      }
+
+      // Últimas 6 interações do histórico
+      chatHistory.slice(-6).forEach(entry => messages.push(entry));
+      messages.push({ role: 'user', content: question });
+
+      try {
+        const response = await wllama.createChatCompletion({
+          messages,
+          nPredict: 300,
+          sampling: { temp: 0.7, top_k: 40, top_p: 0.9 }
+        });
+
+        const replyText = response.choices?.[0]?.message?.content || String(response);
+        thinkingEl.remove();
+        addMessage(replyText, 'ia');
+
+        // Atualiza histórico
+        chatHistory.push({ role: 'user', content: question });
+        chatHistory.push({ role: 'assistant', content: replyText });
+
+        // Leitura automática se ativada
+        if (autoVoiceEnabled) speakText(replyText);
+
+      } catch (err) {
+        thinkingEl.remove();
+        addMessage(`Erro: ${err.message}`, 'ia');
+        console.error(err);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // ==================== Reconhecimento de Voz (Microfone) ====================
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognitionAPI) {
+      const recognition = new SpeechRecognitionAPI();
+      recognition.lang = 'pt-BR';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onresult = (e) => {
+        chatInput.value = e.results[0][0].transcript;
+        chatInput.focus();
+      };
+
+      recognition.onstart = () => micBtn.classList.add('recording');
+      recognition.onend = () => micBtn.classList.remove('recording');
+      recognition.onerror = () => micBtn.classList.remove('recording');
+
+      micBtn.addEventListener('click', () => recognition.start());
+    } else {
+      micBtn.disabled = true;
+      micBtn.title = 'Reconhecimento de voz não suportado neste navegador';
+    }
+
+    // ==================== Síntese de Voz (Leitura) ====================
+    let availableVoices = [];
+    let autoVoiceEnabled = false;
+
+    function loadVoices() {
+      availableVoices = window.speechSynthesis.getVoices();
+      populateVoiceSelect();
+    }
+
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    function populateVoiceSelect() {
+      const ptVoices = availableVoices.filter(v => v.lang.startsWith('pt'));
+      const voicesToShow = ptVoices.length ? ptVoices : availableVoices;
+
+      voiceSelect.innerHTML = voicesToShow
+        .map(v => `<option value="${v.name}">${v.name} (${v.lang})</option>`)
+        .join('');
+
+      // Pré-seleciona voz de melhor qualidade
+      const preferred = voicesToShow.find(v =>
+        v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium')
+      );
+      if (preferred) voiceSelect.value = preferred.name;
+    }
+
+    function speakText(text) {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      const selectedVoice = availableVoices.find(v => v.name === voiceSelect.value);
+
+      if (selectedVoice) utterance.voice = selectedVoice;
+      utterance.lang = 'pt-BR';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    testVoiceBtn.addEventListener('click', () => {
+      speakText('Olá! Esta é a voz que usarei para responder suas perguntas.');
+    });
+
+    autoVoiceToggle.addEventListener('click', () => {
+      autoVoiceEnabled = !autoVoiceEnabled;
+      autoVoiceToggle.textContent = autoVoiceEnabled ? 'ON' : 'OFF';
+      autoVoiceToggle.classList.toggle('active', autoVoiceEnabled);
+    });
+  </script>
+</body>
+</html>
