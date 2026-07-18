@@ -1,344 +1,531 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Segundo Cérebro</title>
-<style>
-  :root{
-    --bg:#0e0e12; --card:#1a1a20; --line:#28282f;
-    --accent:#7c5cff; --text:#f1f1f5; --sub:#8b8b98;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-  html,body{height:100%}
-  body{background:var(--bg);color:var(--text);display:flex;flex-direction:column}
-
-  /* Topo */
-  header{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:14px 16px;border-bottom:1px solid var(--line);flex:0 0 auto
-  }
-  header .titulo{font-size:16px;font-weight:600}
-  header .titulo span{display:block;font-size:11px;color:var(--sub);font-weight:400;margin-top:1px}
-  header button{background:none;border:none;color:var(--sub);font-size:20px;padding:4px 8px;cursor:pointer}
-
-  /* Chat */
-  main{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
-  .vazio{margin:auto;text-align:center;color:var(--sub);font-size:14px;padding:20px}
-  .vazio b{color:var(--text);display:block;font-size:16px;margin-bottom:6px}
-  .msg{max-width:85%;padding:11px 14px;border-radius:16px;font-size:15px;line-height:1.5;white-space:pre-wrap}
-  .msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
-  .msg.ia{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px}
-  .pensando{align-self:flex-start;color:var(--sub);font-size:13px;padding:4px 14px}
-
-  /* Barra inferior */
-  .barra-input{
-    flex:0 0 auto;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
-    border-top:1px solid var(--line);display:flex;gap:8px;align-items:flex-end
-  }
-  .barra-input textarea{
-    flex:1;resize:none;max-height:110px;padding:11px 14px;border-radius:20px;
-    border:1px solid var(--line);background:var(--card);color:var(--text);font-size:15px
-  }
-  .btn-redondo{
-    flex:0 0 auto;width:42px;height:42px;border-radius:50%;border:none;
-    background:var(--card);border:1px solid var(--line);color:var(--text);font-size:18px;cursor:pointer
-  }
-  .btn-redondo.enviar{background:var(--accent);border-color:var(--accent);color:#fff}
-  .btn-redondo:disabled{opacity:.4}
-  .btn-redondo.gravando{background:#ff5c7a;border-color:#ff5c7a;color:#fff}
-
-  .aviso-topo{font-size:12px;color:var(--sub);text-align:center;padding:6px 16px;border-bottom:1px solid var(--line)}
-
-  /* Painel de configurações (some por padrão) */
-  .painel-fundo{
-    position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:20
-  }
-  .painel-fundo.aberto{display:block}
-  .painel{
-    position:fixed;right:0;top:0;bottom:0;width:88%;max-width:360px;
-    background:var(--bg);border-left:1px solid var(--line);z-index:21;
-    transform:translateX(100%);transition:transform .25s;overflow-y:auto;padding:16px
-  }
-  .painel.aberto{transform:translateX(0)}
-  .painel h2{font-size:15px;margin:14px 0 8px}
-  .painel h2:first-child{margin-top:0}
-  .painel p.dica{font-size:12px;color:var(--sub);margin-bottom:8px;line-height:1.5}
-  .painel input[type=file]{width:100%;font-size:12.5px;color:var(--sub);margin-bottom:8px}
-  .painel select{width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);margin-bottom:8px}
-  .painel button{
-    width:100%;padding:10px;border-radius:9px;border:1px solid var(--line);
-    background:var(--card);color:var(--text);font-size:13.5px;margin-bottom:8px;cursor:pointer
-  }
-  .painel button.principal{background:var(--accent);border-color:var(--accent);color:#fff}
-  .status-linha{font-size:12px;color:var(--sub);margin-bottom:8px;min-height:14px}
-  .lista{font-size:12px;color:var(--sub);margin-bottom:8px;word-break:break-all;line-height:1.6}
-  .barra-progresso{height:5px;background:var(--card);border-radius:3px;overflow:hidden;margin-bottom:8px}
-  .barra-progresso div{height:100%;background:var(--accent);width:0%}
-  .fechar-painel{display:flex;justify-content:flex-end}
-  .toggle-linha{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-  .toggle-linha span{font-size:13.5px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Minha Própria IA</title>
+  <style>
+    :root {
+      --bg: #0a0a14; --card: #1a1a26; --border: #2a2a3a;
+      --accent: #5c7cfa; --text: #eeeef5; --sub: #8a8a9a; --radius: 16px;
+      --good: #51cf66;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; overflow: hidden; }
+    .header { padding: 12px 18px; border-bottom: 1px solid var(--border); background: rgba(10,10,20,0.9); backdrop-filter: blur(12px); display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 17px; display: flex; align-items: center; gap: 8px; }
+    .tab-bar { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; }
+    .tab-bar button { flex: 1; padding: 10px 6px; background: none; border: none; color: var(--sub); font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+    .tab-bar button.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { flex: 1; overflow-y: auto; padding: 16px; display: none; }
+    .tab-content.active { display: flex; flex-direction: column; gap: 14px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    textarea, select, input[type="text"], input[type="file"], input[type="number"] { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 14px; resize: vertical; }
+    button { padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 14px; cursor: pointer; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:disabled { opacity: 0.5; pointer-events: none; }
+    .flex-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: var(--accent); color: #fff; white-space: nowrap; }
+    .badge.off { background: var(--border); color: var(--sub); }
+    .log { font-size: 12px; color: var(--sub); max-height: 160px; overflow-y: auto; white-space: pre-wrap; background: #111; padding: 8px; border-radius: 8px; }
+    .log .loss-down { color: var(--good); }
+    .message { max-width: 85%; padding: 10px 14px; border-radius: var(--radius); margin-bottom: 8px; }
+    .message.user { align-self: flex-end; background: var(--accent); color: #fff; }
+    .message.ia { align-self: flex-start; background: var(--card); border: 1px solid var(--border); }
+    .message.ia .fonte { display:block; font-size: 10px; color: var(--sub); margin-top: 4px; }
+    .avatar-pick { display: flex; gap: 6px; flex-wrap: wrap; }
+    .avatar-pick button { font-size: 20px; padding: 6px 10px; }
+    .avatar-pick button.selected { border-color: var(--accent); background: #24243a; }
+    label { font-size: 13px; color: var(--sub); }
+    .stat { font-size: 12px; color: var(--sub); }
+    p.hint { font-size: 12px; color: var(--sub); }
+    input[type="number"] { width: 70px; display: inline-block; }
+  </style>
 </head>
 <body>
+  <header class="header">
+    <h1><span id="avatarDisplay">🧠</span> <span id="nomeDisplay">Minha IA</span></h1>
+    <div class="flex-row" style="gap:4px;">
+      <span id="statusNumerico" class="badge off">Números</span>
+      <span id="statusLinguagem" class="badge off">Linguagem</span>
+    </div>
+  </header>
 
-<header>
-  <div class="titulo">🧠 Segundo Cérebro<span id="statusModeloTopo">nenhum modelo carregado</span></div>
-  <button id="btnAbrirPainel">⚙️</button>
-</header>
-
-<main id="janelaChat">
-  <div class="vazio" id="estadoVazio">
-    <b>Sua IA offline</b>
-    Toque em ⚙️ pra carregar o modelo.<br>Depois é só conversar aqui, por texto ou voz.
+  <div class="tab-bar">
+    <button class="active" data-tab="identidade">🪪 Identidade</button>
+    <button data-tab="numeros">🔢 Treinar Números</button>
+    <button data-tab="linguagem">📚 Treinar Linguagem</button>
+    <button data-tab="chat">💬 Conversar</button>
+    <button data-tab="save">💾 Salvar</button>
   </div>
-</main>
 
-<div class="barra-input">
-  <textarea id="entradaChat" placeholder="Escreva ou fale..." rows="1"></textarea>
-  <button class="btn-redondo" id="btnMic">🎤</button>
-  <button class="btn-redondo enviar" id="btnEnviar">➤</button>
-</div>
-
-<!-- Painel de configurações -->
-<div class="painel-fundo" id="painelFundo"></div>
-<div class="painel" id="painel">
-  <div class="fechar-painel"><button class="btn-redondo" id="btnFecharPainel">✕</button></div>
-
-  <h2>Modelo da IA</h2>
-  <p class="dica">Baixa uma vez (fica em cache no navegador) e depois funciona offline.</p>
-  <select id="modeloSelect">
-    <option value="HuggingFaceTB/SmolLM2-135M-Instruct">Rápido — SmolLM2 135M (~110MB)</option>
-    <option value="HuggingFaceTB/SmolLM2-360M-Instruct">Equilibrado — SmolLM2 360M (~260MB)</option>
-    <option value="Xenova/Qwen2.5-0.5B-Instruct">Mais completo — Qwen2.5 0.5B (~350MB)</option>
-  </select>
-  <button class="principal" id="btnCarregarModelo">Carregar modelo</button>
-  <div class="barra-progresso"><div id="barraModelo"></div></div>
-  <div class="status-linha" id="statusModelo">Nenhum modelo carregado.</div>
-
-  <h2>Materiais (ensinar a IA)</h2>
-  <p class="dica">Arquivos .txt/.md do pendrive. A IA busca trechos parecidos com sua pergunta pra responder melhor.</p>
-  <input type="file" id="inputMaterial" accept=".txt,.md" multiple>
-  <div class="lista" id="listaMateriais">Nenhum material carregado.</div>
-  <button id="btnLimparMateriais">Limpar materiais</button>
-
-  <h2>Voz</h2>
-  <select id="seletorVoz"></select>
-  <button id="btnTestarVoz">Testar voz</button>
-  <div class="toggle-linha">
-    <span>Ler respostas em voz alta</span>
-    <button class="btn-redondo" id="btnAutoVoz" style="width:auto;border-radius:16px;padding:6px 12px;font-size:12px">OFF</button>
+  <!-- Identidade -->
+  <div id="identidadeTab" class="tab-content active">
+    <div class="card">
+      <h3>Quem é a sua IA?</h3>
+      <label>Nome</label>
+      <input type="text" id="nomeInput" value="Minha IA">
+      <label style="margin-top:8px; display:block;">Avatar</label>
+      <div class="avatar-pick" id="avatarPick">
+        <button data-av="🧠">🧠</button><button data-av="🤖">🤖</button><button data-av="✨">✨</button>
+        <button data-av="🦉">🦉</button><button data-av="🌱">🌱</button><button data-av="⚡">⚡</button>
+      </div>
+      <button class="primary" id="salvarIdentidadeBtn" style="margin-top:10px;">Salvar identidade</button>
+    </div>
+    <div class="card">
+      <h3>Sobre ela</h3>
+      <p class="stat">Criada em: <span id="criadaEmDisplay">—</span></p>
+      <p class="stat">Rede numérica: <span id="epocasDisplay">não criada</span></p>
+      <p class="stat">Modelo de linguagem: <span id="linguagemStatDisplay">não criado</span></p>
+      <p class="stat">Itens na memória: <span id="memoriaCountDisplay">0</span></p>
+    </div>
+    <div class="card">
+      <h3>Como ela pensa</h3>
+      <p class="hint">Quando você conversa, ela decide na hora: números → rede neural numérica; frases conhecidas (saudação, "quem é você" etc.) → respostas certeiras; texto livre → tenta continuar com o modelo de linguagem, se ele já tiver sido treinado.</p>
+    </div>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js"></script>
-<script type="module">
-window.transformers.env.allowLocalModels = false;
-window.transformers.env.useBrowserCache = true;
-window.transformers.env.cacheDir = 'segundo-cerebro-cache';
-const { pipeline } = window.transformers;
+  <!-- Treinar Números -->
+  <div id="numerosTab" class="tab-content">
+    <div class="card">
+      <h3>Arquitetura da rede</h3>
+      <div class="flex-row">
+        <input type="text" id="inputSize" placeholder="Entrada" value="2" style="width:56px;">
+        <input type="text" id="hiddenSize" placeholder="Ocultos" value="4" style="width:56px;">
+        <input type="text" id="outputSize" placeholder="Saída" value="1" style="width:56px;">
+      </div>
+      <label style="margin-top:8px; display:block;">Ativação</label>
+      <select id="ativacaoSelect">
+        <option value="sigmoide">Sigmoide</option>
+        <option value="tanh">Tanh</option>
+        <option value="relu">ReLU</option>
+      </select>
+      <button class="primary" id="createNetworkBtn" style="margin-top:8px;">Criar rede</button>
+    </div>
+    <div class="card">
+      <h3>Dados de treino (CSV)</h3>
+      <p class="hint">Formato: entrada1,entrada2,...,saída (último valor é o alvo)</p>
+      <textarea id="trainingData" rows="6" placeholder="0,0,0
+0,1,1
+1,0,1
+1,1,0"></textarea>
+      <div class="flex-row" style="margin-top:8px;">
+        <label>Épocas <input type="number" id="epochs" value="1000"></label>
+        <label>Taxa <input type="number" id="learningRate" value="0.1" step="0.01"></label>
+        <label>Momentum <input type="number" id="momentumInput" value="0.9" step="0.05"></label>
+      </div>
+      <button class="primary" id="trainBtn" style="margin-top:8px;">Treinar rede</button>
+      <div class="log" id="trainLog"></div>
+    </div>
+  </div>
 
-// ---------- Painel lateral ----------
-const painel = document.getElementById('painel');
-const painelFundo = document.getElementById('painelFundo');
-function abrirPainel(){ painel.classList.add('aberto'); painelFundo.classList.add('aberto'); }
-function fecharPainel(){ painel.classList.remove('aberto'); painelFundo.classList.remove('aberto'); }
-document.getElementById('btnAbrirPainel').addEventListener('click', abrirPainel);
-document.getElementById('btnFecharPainel').addEventListener('click', fecharPainel);
-painelFundo.addEventListener('click', fecharPainel);
+  <!-- Treinar Linguagem -->
+  <div id="linguagemTab" class="tab-content">
+    <div class="card">
+      <h3>1. Carregar texto de treino</h3>
+      <input type="file" id="trainFileInput" accept=".txt">
+      <p class="hint">Um .txt qualquer (histórias, legendas, código). Textos maiores = vocabulário mais rico, treino mais lento no celular.</p>
+    </div>
+    <div class="card">
+      <h3>2. Configuração do modelo</h3>
+      <div class="flex-row">
+        <label>Dim <input type="number" id="dModel" value="32"></label>
+        <label>Heads <input type="number" id="numHeads" value="2"></label>
+        <label>Layers <input type="number" id="numLayers" value="2"></label>
+        <label>Block <input type="number" id="blockSize" value="16"></label>
+      </div>
+      <button class="primary" id="initModelBtn" style="margin-top:8px;">Inicializar modelo</button>
+    </div>
+    <div class="card">
+      <h3>3. Treinar</h3>
+      <div class="flex-row">
+        <label>Épocas <input type="number" id="epochsLM" value="5"></label>
+        <label>LR <input type="number" id="lr" value="0.01" step="0.001"></label>
+        <label>Amostras/época <input type="number" id="samplesPerEpoch" value="300"></label>
+      </div>
+      <p class="hint">Backpropagation completa — real, não decoração. Mais lento, mas aprende de verdade.</p>
+      <button id="trainLMBtn" style="margin-top:8px;">Começar treinamento</button>
+      <div class="log" id="trainLogLM">Aguardando...</div>
+    </div>
+    <div class="card">
+      <h3>Testar geração livre</h3>
+      <div class="flex-row">
+        <input type="text" id="promptInput" placeholder="Prompt (ex: Era uma vez)" style="flex:1; min-width:150px;">
+        <button class="primary" id="generateBtn">Gerar</button>
+      </div>
+      <div class="flex-row">
+        <label>Temperatura <input type="number" id="temperature" value="0.8" step="0.1" min="0.1" max="2"></label>
+        <label>Tokens <input type="number" id="maxTokens" value="80"></label>
+      </div>
+      <div class="log" id="generateLog"></div>
+    </div>
+  </div>
 
-// ---------- IA (transformers.js) ----------
-let geradorTexto = null;
-let modeloCarregado = false;
-let nomeModeloAtual = null;
+  <!-- Conversar -->
+  <div id="chatTab" class="tab-content">
+    <div id="chatMessages" style="flex:1; display:flex; flex-direction:column; overflow-y:auto;"></div>
+    <div class="flex-row" style="margin-top:8px;">
+      <input type="text" id="chatInput" placeholder="Fale algo ou digite números (ex: 1,0)" style="flex:1; min-width:150px;">
+      <button class="primary" id="sendChatBtn">Enviar</button>
+    </div>
+  </div>
 
-const modeloSelect = document.getElementById('modeloSelect');
-const btnCarregarModelo = document.getElementById('btnCarregarModelo');
-const statusModelo = document.getElementById('statusModelo');
-const statusModeloTopo = document.getElementById('statusModeloTopo');
-const barraModelo = document.getElementById('barraModelo');
+  <!-- Salvar -->
+  <div id="saveTab" class="tab-content">
+    <div class="card">
+      <h3>Salvar tudo</h3>
+      <p class="hint">Salva rede numérica + modelo de linguagem + identidade + memória num único arquivo.</p>
+      <button id="saveAllBtn">Baixar tudo (JSON)</button>
+    </div>
+    <div class="card">
+      <h3>Carregar</h3>
+      <input type="file" id="loadAllFile" accept=".json">
+      <button id="loadAllBtn" style="margin-top:8px;">Carregar arquivo</button>
+    </div>
+    <div class="card">
+      <h3>Salvamento automático</h3>
+      <p class="hint">Este navegador guarda tudo sozinho (localStorage). Continua aqui mesmo se fechar a aba.</p>
+      <button id="limparAutoBtn">Apagar salvamento automático</button>
+    </div>
+  </div>
 
-async function carregarModelo(){
-  const modeloEscolhido = modeloSelect.value;
-  statusModelo.textContent = 'Baixando/carregando (só demora na primeira vez)...';
-  statusModeloTopo.textContent = 'carregando modelo...';
-  btnCarregarModelo.disabled = true;
-  barraModelo.style.width = '0%';
-  try{
-    geradorTexto = await pipeline('text-generation', modeloEscolhido, {
-      quantized: true,
-      dtype: 'q4',
-      progress_callback: (info)=>{
-        if(info.status==='progress' && info.total){
-          const pct = Math.round((info.loaded/info.total)*100);
-          barraModelo.style.width = pct+'%';
-          statusModelo.textContent = `Baixando... ${pct}%`;
+  <script src="MinhaBibliotecaIA.js"></script>
+  <script src="CerebroConversa.js"></script>
+  <script src="MiniTransformer.js"></script>
+  <script>
+    const CHAVE_AUTO = 'minha-ia-completa-autosave';
+
+    document.querySelectorAll('.tab-bar button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+        if (btn.dataset.tab === 'identidade') atualizarPainelIdentidade();
+      });
+    });
+
+    // ---------- Estado global ----------
+    let rede = null;          // MinhaBibliotecaIA
+    let cerebro = null;       // CerebroConversa
+    let transformer = null;   // MiniTransformer
+    let charToIdx = {}, idxToChar = {}, ultimaPerdaLM = null;
+
+    // ---------- Identidade / header ----------
+    function atualizarHeader() {
+      if (!rede) return;
+      document.getElementById('avatarDisplay').textContent = rede.identidade.avatar;
+      document.getElementById('nomeDisplay').textContent = rede.identidade.nome;
+    }
+    function atualizarBadges() {
+      const bn = document.getElementById('statusNumerico');
+      bn.textContent = rede && rede.identidade.epocasTreinadas > 0 ? 'Números ✓' : 'Números';
+      bn.classList.toggle('off', !(rede && rede.identidade.epocasTreinadas > 0));
+      const bl = document.getElementById('statusLinguagem');
+      bl.textContent = transformer ? 'Linguagem ✓' : 'Linguagem';
+      bl.classList.toggle('off', !transformer);
+    }
+    function atualizarPainelIdentidade() {
+      if (!rede) return;
+      document.getElementById('nomeInput').value = rede.identidade.nome;
+      document.querySelectorAll('#avatarPick button').forEach(b => b.classList.toggle('selected', b.dataset.av === rede.identidade.avatar));
+      document.getElementById('criadaEmDisplay').textContent = new Date(rede.identidade.criadaEm).toLocaleString('pt-BR');
+      document.getElementById('epocasDisplay').textContent = `${rede.identidade.epocasTreinadas} épocas treinadas`;
+      document.getElementById('linguagemStatDisplay').textContent = transformer ? `vocabulário de ${transformer.vocabSize} caracteres` : 'não criado';
+      document.getElementById('memoriaCountDisplay').textContent = rede.memoria.length;
+      atualizarBadges();
+    }
+
+    function autoSalvar() {
+      try {
+        localStorage.setItem(CHAVE_AUTO, JSON.stringify({
+          rede: rede ? rede.salvar() : null,
+          transformer: transformer ? transformer.salvar() : null
+        }));
+      } catch (e) { console.warn('Falha ao salvar automaticamente', e); }
+    }
+
+    function criarRedeNova(camadas, opcoes) {
+      rede = new MinhaBibliotecaIA(camadas, opcoes);
+      cerebro = new CerebroConversa(rede.identidade);
+      atualizarHeader();
+      atualizarPainelIdentidade();
+      autoSalvar();
+    }
+
+    function restaurarVocabDoTransformer() {
+      charToIdx = {}; idxToChar = {};
+      if (transformer && transformer.vocabChars) {
+        transformer.vocabChars.forEach((c, i) => { charToIdx[c] = i; idxToChar[i] = c; });
+      }
+    }
+
+    (function iniciar() {
+      const salvoRaw = localStorage.getItem(CHAVE_AUTO);
+      let salvo = null;
+      try { salvo = salvoRaw ? JSON.parse(salvoRaw) : null; } catch (e) { salvo = null; }
+
+      if (salvo && salvo.rede) {
+        rede = new MinhaBibliotecaIA([1, 1, 1]);
+        rede.carregar(salvo.rede);
+        cerebro = new CerebroConversa(rede.identidade);
+      } else {
+        criarRedeNova([2, 4, 1], { nome: 'Minha IA', avatar: '🧠' });
+      }
+
+      if (salvo && salvo.transformer) {
+        try {
+          const dt = JSON.parse(salvo.transformer);
+          transformer = new MiniTransformer(dt.vocabSize, dt.dModel, dt.numHeads, dt.numLayers, dt.blockSize);
+          transformer.carregar(salvo.transformer);
+          restaurarVocabDoTransformer();
+        } catch (e) { console.warn('Não foi possível restaurar o modelo de linguagem', e); }
+      }
+
+      atualizarHeader();
+      atualizarPainelIdentidade();
+    })();
+
+    // ---------- Aba Identidade ----------
+    document.getElementById('avatarPick').addEventListener('click', (e) => {
+      if (e.target.tagName !== 'BUTTON') return;
+      document.querySelectorAll('#avatarPick button').forEach(b => b.classList.remove('selected'));
+      e.target.classList.add('selected');
+    });
+    document.getElementById('salvarIdentidadeBtn').addEventListener('click', () => {
+      if (!rede) return;
+      rede.identidade.nome = document.getElementById('nomeInput').value.trim() || 'Minha IA';
+      const avSel = document.querySelector('#avatarPick button.selected');
+      rede.identidade.avatar = avSel ? avSel.dataset.av : rede.identidade.avatar;
+      cerebro.identidade = rede.identidade;
+      atualizarHeader(); autoSalvar();
+      alert('Identidade salva!');
+    });
+
+    // ---------- Aba Treinar Números ----------
+    document.getElementById('createNetworkBtn').addEventListener('click', () => {
+      const input = parseInt(document.getElementById('inputSize').value);
+      const hidden = parseInt(document.getElementById('hiddenSize').value);
+      const output = parseInt(document.getElementById('outputSize').value);
+      const ativacao = document.getElementById('ativacaoSelect').value;
+      const nomeAtual = rede ? rede.identidade.nome : 'Minha IA';
+      const avatarAtual = rede ? rede.identidade.avatar : '🧠';
+      criarRedeNova([input, hidden, output], { ativacao, nome: nomeAtual, avatar: avatarAtual });
+      document.getElementById('trainLog').textContent = 'Rede criada. Insira dados de treino e clique em Treinar.';
+    });
+
+    document.getElementById('trainBtn').addEventListener('click', () => {
+      if (!rede) { alert('Crie a rede primeiro!'); return; }
+      const dadosBrutos = document.getElementById('trainingData').value.trim();
+      if (!dadosBrutos) { alert('Insira dados de treino no formato CSV.'); return; }
+      let dados;
+      try {
+        const linhas = dadosBrutos.split('\n').filter(l => l.trim() !== '');
+        dados = linhas.map(linha => {
+          const valores = linha.split(',').map(v => parseFloat(v.trim()));
+          if (valores.length !== rede.camadas[0] + 1) throw new Error(`Linha com número errado de valores. Esperado ${rede.camadas[0] + 1}`);
+          return { entrada: valores.slice(0, -1), alvo: [valores[valores.length - 1]] };
+        });
+      } catch (err) { alert(err.message); return; }
+
+      const epocas = parseInt(document.getElementById('epochs').value);
+      rede.taxaAprendizado = parseFloat(document.getElementById('learningRate').value);
+      rede.momentum = parseFloat(document.getElementById('momentumInput').value);
+      const logEl = document.getElementById('trainLog');
+      logEl.textContent = 'Treinando...';
+
+      function treinarEpoca(epoca) {
+        if (epoca >= epocas) {
+          logEl.textContent = `Treinamento concluído (${epocas} épocas).`;
+          atualizarPainelIdentidade(); autoSalvar();
+          return;
+        }
+        for (let i = dados.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [dados[i], dados[j]] = [dados[j], dados[i]]; }
+        rede.treinarLote(dados);
+        if (epoca % 100 === 0) logEl.textContent = `Época ${epoca}/${epocas}...`;
+        setTimeout(() => treinarEpoca(epoca + 1), 0);
+      }
+      setTimeout(() => treinarEpoca(0), 10);
+    });
+
+    // ---------- Aba Treinar Linguagem ----------
+    document.getElementById('trainFileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        window._textoTreinoLM = ev.target.result;
+        document.getElementById('trainLogLM').textContent = `Arquivo carregado: ${file.name} (${window._textoTreinoLM.length} caracteres).`;
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('initModelBtn').addEventListener('click', () => {
+      const texto = window._textoTreinoLM;
+      if (!texto) { alert('Carregue um arquivo de texto primeiro!'); return; }
+      const dModel = parseInt(document.getElementById('dModel').value);
+      const numHeads = parseInt(document.getElementById('numHeads').value);
+      const numLayers = parseInt(document.getElementById('numLayers').value);
+      const blockSize = parseInt(document.getElementById('blockSize').value);
+      if (dModel % numHeads !== 0) { alert('Dim precisa ser divisível por Heads.'); return; }
+
+      const chars = [...new Set(texto)].sort();
+      transformer = new MiniTransformer(chars.length, dModel, numHeads, numLayers, blockSize);
+      transformer.definirVocabulario(chars);
+      restaurarVocabDoTransformer();
+      document.getElementById('trainLogLM').textContent = `Vocabulário: ${chars.length} caracteres. Modelo inicializado — ainda não sabe nada.`;
+      atualizarPainelIdentidade(); autoSalvar();
+    });
+
+    document.getElementById('trainLMBtn').addEventListener('click', async () => {
+      if (!transformer) { alert('Inicialize o modelo primeiro.'); return; }
+      const texto = window._textoTreinoLM;
+      if (!texto || transformer.blockSize > texto.length) { alert('Carregue um texto maior que o Block configurado.'); return; }
+
+      const epochs = parseInt(document.getElementById('epochsLM').value);
+      const lr = parseFloat(document.getElementById('lr').value);
+      const amostrasPorEpoca = parseInt(document.getElementById('samplesPerEpoch').value);
+      const logEl = document.getElementById('trainLogLM');
+      logEl.textContent = 'Treinando (backpropagation real)...\n';
+
+      const blockSize = transformer.blockSize;
+      const dataIndices = [...texto].map(c => charToIdx[c] ?? 0);
+      const numSamples = dataIndices.length - blockSize;
+
+      for (let epoch = 0; epoch < epochs; epoch++) {
+        let totalLoss = 0, count = 0;
+        const indices = [...Array(numSamples).keys()].sort(() => Math.random() - 0.5);
+        const limite = Math.min(numSamples, amostrasPorEpoca);
+        for (let step = 0; step < limite; step++) {
+          const start = indices[step];
+          const inputSeq = dataIndices.slice(start, start + blockSize);
+          const target = dataIndices[start + blockSize];
+          totalLoss += transformer.trainStep(inputSeq, target, lr);
+          count++;
+          if (step % 50 === 0) await new Promise(r => setTimeout(r, 0));
+        }
+        const perdaMedia = totalLoss / count;
+        const melhorou = ultimaPerdaLM === null || perdaMedia < ultimaPerdaLM;
+        logEl.innerHTML += `<span class="${melhorou ? 'loss-down' : ''}">Época ${epoch + 1}/${epochs} — perda média: ${perdaMedia.toFixed(4)}</span>\n`;
+        logEl.scrollTop = logEl.scrollHeight;
+        ultimaPerdaLM = perdaMedia;
+        await new Promise(r => setTimeout(r, 10));
+      }
+      logEl.innerHTML += 'Treinamento finalizado.\n';
+      atualizarPainelIdentidade(); autoSalvar();
+    });
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      if (!transformer) { alert('Treine ou carregue um modelo de linguagem primeiro.'); return; }
+      const prompt = document.getElementById('promptInput').value;
+      if (!prompt) { alert('Digite um prompt.'); return; }
+      const temperature = parseFloat(document.getElementById('temperature').value);
+      const maxTokens = parseInt(document.getElementById('maxTokens').value);
+      const promptIndices = [...prompt].map(c => charToIdx[c] ?? 0);
+      const generatedIndices = transformer.generate(promptIndices, maxTokens, temperature);
+      const generatedText = generatedIndices.map(i => idxToChar[i] ?? '').join('');
+      document.getElementById('generateLog').textContent = generatedText;
+    });
+
+    // ---------- Aba Conversar (chat híbrido) ----------
+    function adicionarMensagem(texto, autor, fonte) {
+      const chatMessages = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = `message ${autor}`;
+      div.textContent = texto;
+      if (fonte) {
+        const span = document.createElement('span');
+        span.className = 'fonte';
+        span.textContent = fonte;
+        div.appendChild(span);
+      }
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function enviarMensagem() {
+      if (!rede || !cerebro) { alert('Crie ou carregue um modelo primeiro!'); return; }
+      const inputEl = document.getElementById('chatInput');
+      const texto = inputEl.value.trim();
+      if (!texto) return;
+      adicionarMensagem(texto, 'user');
+      inputEl.value = '';
+
+      let resposta, fonte;
+
+      if (cerebro.ehEntradaNumerica(texto)) {
+        const entrada = texto.split(',').map(v => parseFloat(v.trim()));
+        if (entrada.length !== rede.camadas[0]) {
+          resposta = `Minha rede numérica espera ${rede.camadas[0]} número(s), você mandou ${entrada.length}.`;
+        } else {
+          const saida = rede.prever(entrada);
+          resposta = `Saída: ${saida.map(v => v.toFixed(4)).join(', ')}`;
+          fonte = '🔢 rede neural numérica';
+        }
+      } else {
+        resposta = cerebro.responder(texto);
+        if (resposta) {
+          fonte = '💬 resposta por regra';
+        } else if (transformer) {
+          const promptIndices = [...texto].map(c => charToIdx[c] ?? 0);
+          const geradoIndices = transformer.generate(promptIndices, 60, 0.8);
+          resposta = geradoIndices.map(i => idxToChar[i] ?? '').join('');
+          fonte = '📚 modo experimental — continuação letra a letra, não é uma resposta pensada';
+        } else {
+          resposta = 'Ainda não reconheço essa frase. Treine meu modelo de linguagem na aba "Treinar Linguagem" pra eu tentar continuar textos, ou me mande números pra rede numérica.';
         }
       }
-    });
-    modeloCarregado = true;
-    nomeModeloAtual = modeloEscolhido;
-    statusModelo.textContent = '✅ Modelo pronto: '+modeloEscolhido.split('/').pop();
-    statusModeloTopo.textContent = modeloEscolhido.split('/').pop();
-  }catch(erro){
-    statusModelo.textContent = '❌ '+erro.message;
-    statusModeloTopo.textContent = 'erro ao carregar';
-  }finally{
-    btnCarregarModelo.disabled = false;
-  }
-}
-btnCarregarModelo.addEventListener('click', carregarModelo);
 
-// ---------- Materiais ----------
-let materiais = [];
-const inputMaterial = document.getElementById('inputMaterial');
-const listaMateriais = document.getElementById('listaMateriais');
-function atualizaListaMateriais(){
-  listaMateriais.textContent = materiais.length ? materiais.map(m=>'• '+m.nome).join('\n') : 'Nenhum material carregado.';
-}
-inputMaterial.addEventListener('change', async ()=>{
-  for(const file of inputMaterial.files){ materiais.push({nome:file.name, texto: await file.text()}); }
-  atualizaListaMateriais();
-});
-document.getElementById('btnLimparMateriais').addEventListener('click', ()=>{ materiais=[]; atualizaListaMateriais(); });
-
-function buscarContexto(pergunta, maxTrechos=3){
-  const palavras = pergunta.toLowerCase().split(/\W+/).filter(p=>p.length>3);
-  if(!palavras.length || !materiais.length) return '';
-  const trechos = [];
-  materiais.forEach(m=>{
-    m.texto.split(/\n{1,}/).forEach(par=>{
-      if(par.trim().length<20) return;
-      const baixo = par.toLowerCase();
-      let pontos = 0;
-      palavras.forEach(p=>{ if(baixo.includes(p)) pontos++; });
-      if(pontos>0) trechos.push({par, pontos, fonte:m.nome});
-    });
-  });
-  trechos.sort((a,b)=>b.pontos-a.pontos);
-  return trechos.slice(0,maxTrechos).map(t=>`(de ${t.fonte}) ${t.par}`).join('\n\n');
-}
-
-// ---------- Chat ----------
-const janelaChat = document.getElementById('janelaChat');
-const estadoVazio = document.getElementById('estadoVazio');
-const entradaChat = document.getElementById('entradaChat');
-const btnEnviar = document.getElementById('btnEnviar');
-let historico = [];
-
-entradaChat.addEventListener('input', ()=>{
-  entradaChat.style.height = 'auto';
-  entradaChat.style.height = Math.min(entradaChat.scrollHeight,110)+'px';
-});
-
-function adicionarMensagem(texto, quem){
-  if(estadoVazio) estadoVazio.remove();
-  const div = document.createElement('div');
-  div.className = 'msg '+(quem==='user'?'user':'ia');
-  div.textContent = texto;
-  janelaChat.appendChild(div);
-  janelaChat.scrollTop = janelaChat.scrollHeight;
-  return div;
-}
-
-async function enviarPergunta(){
-  const pergunta = entradaChat.value.trim();
-  if(!pergunta) return;
-  if(!modeloCarregado){ abrirPainel(); return; }
-
-  adicionarMensagem(pergunta, 'user');
-  entradaChat.value = ''; entradaChat.style.height='auto';
-  btnEnviar.disabled = true;
-
-  const pensando = document.createElement('div');
-  pensando.className = 'pensando';
-  pensando.textContent = 'pensando...';
-  janelaChat.appendChild(pensando);
-  janelaChat.scrollTop = janelaChat.scrollHeight;
-
-  const contexto = buscarContexto(pergunta);
-  let promptFinal = '';
-  if(contexto) promptFinal += `Contexto (materiais do usuário):\n${contexto}\n\n`;
-  historico.slice(-6).forEach(h=>{
-    promptFinal += (h.role==='user' ? 'Usuário: ' : 'Assistente: ') + h.content + '\n';
-  });
-  promptFinal += 'Usuário: ' + pergunta + '\nAssistente:';
-
-  try{
-    const mensagens = [];
-    if(contexto) mensagens.push({role:'system', content:`Use estes trechos dos materiais do usuário se forem úteis para responder:\n\n${contexto}`});
-    historico.slice(-6).forEach(h=>mensagens.push(h));
-    mensagens.push({role:'user', content:pergunta});
-
-    const saida = await geradorTexto(mensagens, {
-      max_new_tokens: 300,
-      temperature: 0.7,
-      do_sample: true
-    });
-    let texto = '';
-    const gerado = saida[0]?.generated_text;
-    if(Array.isArray(gerado)){
-      texto = gerado[gerado.length-1]?.content || '';
-    }else{
-      texto = String(gerado||'').split('Assistente:').pop().trim();
+      adicionarMensagem(resposta, 'ia', fonte);
+      rede.lembrar(texto, resposta);
+      atualizarPainelIdentidade(); autoSalvar();
     }
-    pensando.remove();
-    adicionarMensagem(texto, 'ia');
-    historico.push({role:'user', content:pergunta});
-    historico.push({role:'assistant', content:texto});
-    if(leituraAutomatica) falar(texto);
-  }catch(erro){
-    pensando.remove();
-    adicionarMensagem('Erro: '+erro.message, 'ia');
-  }finally{
-    btnEnviar.disabled = false;
-  }
-}
-btnEnviar.addEventListener('click', enviarPergunta);
-entradaChat.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); enviarPergunta(); } });
+    document.getElementById('sendChatBtn').addEventListener('click', enviarMensagem);
+    document.getElementById('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarMensagem(); });
 
-// ---------- Voz: microfone ----------
-const btnMic = document.getElementById('btnMic');
-const Reconhecedor = window.SpeechRecognition || window.webkitSpeechRecognition;
-if(Reconhecedor){
-  const rec = new Reconhecedor();
-  rec.lang = 'pt-BR'; rec.continuous = false; rec.interimResults = false;
-  rec.onresult = e=>{ entradaChat.value = e.results[0][0].transcript; };
-  rec.onstart = ()=> btnMic.classList.add('gravando');
-  rec.onend = ()=> btnMic.classList.remove('gravando');
-  btnMic.addEventListener('click', ()=> rec.start());
-}else{ btnMic.disabled = true; }
+    // ---------- Salvar / Carregar ----------
+    document.getElementById('saveAllBtn').addEventListener('click', () => {
+      if (!rede) { alert('Nada para salvar.'); return; }
+      const pacote = { rede: rede.salvar(), transformer: transformer ? transformer.salvar() : null };
+      const blob = new Blob([JSON.stringify(pacote)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${rede.identidade.nome.replace(/\s+/g, '-').toLowerCase()}-completo.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
 
-// ---------- Voz: saída natural ----------
-let vozesDisponiveis = [];
-function carregarVozes(){ vozesDisponiveis = window.speechSynthesis.getVoices(); preencherSeletorVoz(); }
-window.speechSynthesis.onvoiceschanged = carregarVozes;
-carregarVozes();
+    document.getElementById('loadAllBtn').addEventListener('click', () => {
+      const file = document.getElementById('loadAllFile').files[0];
+      if (!file) { alert('Selecione um arquivo JSON.'); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const pacote = JSON.parse(e.target.result);
+          rede = new MinhaBibliotecaIA([1, 1, 1]);
+          rede.carregar(pacote.rede);
+          cerebro = new CerebroConversa(rede.identidade);
+          transformer = null;
+          if (pacote.transformer) {
+            const dt = JSON.parse(pacote.transformer);
+            transformer = new MiniTransformer(dt.vocabSize, dt.dModel, dt.numHeads, dt.numLayers, dt.blockSize);
+            transformer.carregar(pacote.transformer);
+            restaurarVocabDoTransformer();
+          }
+          atualizarHeader(); atualizarPainelIdentidade(); autoSalvar();
+          alert('Modelo completo carregado com sucesso!');
+        } catch (err) { alert('Arquivo inválido: ' + err.message); }
+      };
+      reader.readAsText(file);
+    });
 
-const seletorVoz = document.getElementById('seletorVoz');
-function preencherSeletorVoz(){
-  const pt = vozesDisponiveis.filter(v=>v.lang.startsWith('pt'));
-  const lista = pt.length ? pt : vozesDisponiveis;
-  seletorVoz.innerHTML = lista.map(v=>`<option value="${v.name}">${v.name} (${v.lang})</option>`).join('');
-  const boa = lista.find(v=> v.name.includes('Google') || v.name.includes('Natural'));
-  if(boa) seletorVoz.value = boa.name;
-}
-function falar(texto){
-  window.speechSynthesis.cancel();
-  const msg = new SpeechSynthesisUtterance(texto);
-  const escolhida = vozesDisponiveis.find(v=>v.name===seletorVoz.value);
-  if(escolhida) msg.voice = escolhida;
-  msg.lang='pt-BR'; msg.rate=1.0; msg.pitch=1.0;
-  window.speechSynthesis.speak(msg);
-}
-document.getElementById('btnTestarVoz').addEventListener('click', ()=> falar('Olá! Essa é a voz que eu vou usar pra te responder.'));
-
-let leituraAutomatica = false;
-const btnAutoVoz = document.getElementById('btnAutoVoz');
-btnAutoVoz.addEventListener('click', ()=>{
-  leituraAutomatica = !leituraAutomatica;
-  btnAutoVoz.textContent = leituraAutomatica ? 'ON' : 'OFF';
-});
-</script>
+    document.getElementById('limparAutoBtn').addEventListener('click', () => {
+      if (confirm('Isso apaga o salvamento automático deste navegador. Continuar?')) {
+        localStorage.removeItem(CHAVE_AUTO);
+        alert('Apagado. Recarregue a página pra começar do zero.');
+      }
+    });
+  </script>
 </body>
 </html>
