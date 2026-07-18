@@ -90,7 +90,7 @@
 <main id="janelaChat">
   <div class="vazio" id="estadoVazio">
     <b>Sua IA offline</b>
-    Toque em ⚙️ pra carregar o modelo do pendrive.<br>Depois é só conversar aqui, por texto ou voz.
+    Toque em ⚙️ pra carregar o modelo.<br>Depois é só conversar aqui, por texto ou voz.
   </div>
 </main>
 
@@ -105,11 +105,14 @@
 <div class="painel" id="painel">
   <div class="fechar-painel"><button class="btn-redondo" id="btnFecharPainel">✕</button></div>
 
-  <h2>Modelo (GGUF)</h2>
-  <p class="dica">Escolha o arquivo do pendrive. Fica só na memória do navegador, nada sobe pra internet.</p>
-  <input type="file" id="inputModelo" accept=".gguf">
-  <button class="principal" id="btnCarregarModelo" disabled>Carregar modelo</button>
-  <button id="btnModeloTeste">Testar com modelo pequeno de exemplo</button>
+  <h2>Modelo da IA</h2>
+  <p class="dica">Baixa uma vez (fica em cache no navegador) e depois funciona offline.</p>
+  <select id="modeloSelect">
+    <option value="HuggingFaceTB/SmolLM2-135M-Instruct">Rápido — SmolLM2 135M (~110MB)</option>
+    <option value="HuggingFaceTB/SmolLM2-360M-Instruct">Equilibrado — SmolLM2 360M (~260MB)</option>
+    <option value="Xenova/Qwen2.5-0.5B-Instruct">Mais completo — Qwen2.5 0.5B (~350MB)</option>
+  </select>
+  <button class="principal" id="btnCarregarModelo">Carregar modelo</button>
   <div class="barra-progresso"><div id="barraModelo"></div></div>
   <div class="status-linha" id="statusModelo">Nenhum modelo carregado.</div>
 
@@ -128,9 +131,12 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js"></script>
 <script type="module">
-import { Wllama } from 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.7/esm/index.js';
-import WasmFromCDN from 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.7/esm/wasm-from-cdn.js';
+window.transformers.env.allowLocalModels = false;
+window.transformers.env.useBrowserCache = true;
+window.transformers.env.cacheDir = 'segundo-cerebro-cache';
+const { pipeline } = window.transformers;
 
 // ---------- Painel lateral ----------
 const painel = document.getElementById('painel');
@@ -141,41 +147,39 @@ document.getElementById('btnAbrirPainel').addEventListener('click', abrirPainel)
 document.getElementById('btnFecharPainel').addEventListener('click', fecharPainel);
 painelFundo.addEventListener('click', fecharPainel);
 
-// ---------- IA (wllama) ----------
-const wllama = new Wllama(WasmFromCDN);
+// ---------- IA (transformers.js) ----------
+let geradorTexto = null;
 let modeloCarregado = false;
-let arquivoModeloEscolhido = null;
+let nomeModeloAtual = null;
 
-const inputModelo = document.getElementById('inputModelo');
+const modeloSelect = document.getElementById('modeloSelect');
 const btnCarregarModelo = document.getElementById('btnCarregarModelo');
 const statusModelo = document.getElementById('statusModelo');
 const statusModeloTopo = document.getElementById('statusModeloTopo');
 const barraModelo = document.getElementById('barraModelo');
 
-inputModelo.addEventListener('change', ()=>{
-  arquivoModeloEscolhido = inputModelo.files[0] || null;
-  btnCarregarModelo.disabled = !arquivoModeloEscolhido;
-});
-
-async function carregarModeloDeArquivo(file){
-  statusModelo.textContent = 'Carregando...';
+async function carregarModelo(){
+  const modeloEscolhido = modeloSelect.value;
+  statusModelo.textContent = 'Baixando/carregando (só demora na primeira vez)...';
   statusModeloTopo.textContent = 'carregando modelo...';
   btnCarregarModelo.disabled = true;
+  barraModelo.style.width = '0%';
   try{
-    // Carrega o arquivo direto (Blob), sem passar por URL — evita o erro de
-    // "must end with .gguf" — e força single-thread, já que o GitHub Pages
-    // não tem os cabeçalhos necessários pro modo multi-thread.
-    await wllama.loadModel([file], {
-      n_threads: 1,
-      progressCallback: ({loaded,total})=>{
-        const pct = Math.round((loaded/total)*100);
-        barraModelo.style.width = pct+'%';
-        statusModelo.textContent = `Carregando... ${pct}%`;
+    geradorTexto = await pipeline('text-generation', modeloEscolhido, {
+      quantized: true,
+      dtype: 'q4',
+      progress_callback: (info)=>{
+        if(info.status==='progress' && info.total){
+          const pct = Math.round((info.loaded/info.total)*100);
+          barraModelo.style.width = pct+'%';
+          statusModelo.textContent = `Baixando... ${pct}%`;
+        }
       }
     });
     modeloCarregado = true;
-    statusModelo.textContent = '✅ Carregado: '+file.name;
-    statusModeloTopo.textContent = file.name;
+    nomeModeloAtual = modeloEscolhido;
+    statusModelo.textContent = '✅ Modelo pronto: '+modeloEscolhido.split('/').pop();
+    statusModeloTopo.textContent = modeloEscolhido.split('/').pop();
   }catch(erro){
     statusModelo.textContent = '❌ '+erro.message;
     statusModeloTopo.textContent = 'erro ao carregar';
@@ -183,25 +187,7 @@ async function carregarModeloDeArquivo(file){
     btnCarregarModelo.disabled = false;
   }
 }
-btnCarregarModelo.addEventListener('click', ()=>{ if(arquivoModeloEscolhido) carregarModeloDeArquivo(arquivoModeloEscolhido); });
-
-document.getElementById('btnModeloTeste').addEventListener('click', async ()=>{
-  statusModelo.textContent = 'Baixando modelo de teste...';
-  try{
-    await wllama.loadModelFromUrl(
-      'https://huggingface.co/ggml-org/models/resolve/main/tinyllamas/stories260K.gguf',
-      { n_threads: 1,
-        progressCallback: ({loaded,total})=>{
-          const pct = Math.round((loaded/total)*100);
-          barraModelo.style.width = pct+'%';
-          statusModelo.textContent = `Baixando teste... ${pct}%`;
-        }}
-    );
-    modeloCarregado = true;
-    statusModelo.textContent = '✅ Modelo de teste carregado';
-    statusModeloTopo.textContent = 'modelo de teste';
-  }catch(erro){ statusModelo.textContent = '❌ '+erro.message; }
-});
+btnCarregarModelo.addEventListener('click', carregarModelo);
 
 // ---------- Materiais ----------
 let materiais = [];
@@ -271,16 +257,31 @@ async function enviarPergunta(){
   janelaChat.scrollTop = janelaChat.scrollHeight;
 
   const contexto = buscarContexto(pergunta);
-  const mensagens = [];
-  if(contexto) mensagens.push({role:'system', content:`Use estes trechos dos materiais do usuário se forem úteis:\n\n${contexto}`});
-  historico.slice(-6).forEach(h=>mensagens.push(h));
-  mensagens.push({role:'user', content:pergunta});
+  let promptFinal = '';
+  if(contexto) promptFinal += `Contexto (materiais do usuário):\n${contexto}\n\n`;
+  historico.slice(-6).forEach(h=>{
+    promptFinal += (h.role==='user' ? 'Usuário: ' : 'Assistente: ') + h.content + '\n';
+  });
+  promptFinal += 'Usuário: ' + pergunta + '\nAssistente:';
 
   try{
-    const resposta = await wllama.createChatCompletion({
-      messages: mensagens, nPredict: 300, sampling:{temp:0.7, top_k:40, top_p:0.9}
+    const mensagens = [];
+    if(contexto) mensagens.push({role:'system', content:`Use estes trechos dos materiais do usuário se forem úteis para responder:\n\n${contexto}`});
+    historico.slice(-6).forEach(h=>mensagens.push(h));
+    mensagens.push({role:'user', content:pergunta});
+
+    const saida = await geradorTexto(mensagens, {
+      max_new_tokens: 300,
+      temperature: 0.7,
+      do_sample: true
     });
-    const texto = resposta.choices?.[0]?.message?.content || String(resposta);
+    let texto = '';
+    const gerado = saida[0]?.generated_text;
+    if(Array.isArray(gerado)){
+      texto = gerado[gerado.length-1]?.content || '';
+    }else{
+      texto = String(gerado||'').split('Assistente:').pop().trim();
+    }
     pensando.remove();
     adicionarMensagem(texto, 'ia');
     historico.push({role:'user', content:pergunta});
