@@ -23,7 +23,7 @@ class CerebroConversa {
       {
         nome: 'ajuda',
         padroes: [/ajuda/i, /como (funciona|uso)/i, /o que (voc[eê] )?faz/i],
-        respostas: () => ['Se você digitar números separados por vírgula (ex: "1,0"), eu uso minha rede neural pra prever uma saída. Se digitar uma pergunta, eu tento reconhecer a intenção e responder.']
+        respostas: () => ['Se você digitar números separados por vírgula (ex: "1,0"), eu uso minha rede neural pra prever uma saída. Se digitar uma pergunta, eu tento reconhecer a intenção e responder direto, sem enrolação.']
       },
       {
         nome: 'despedida',
@@ -34,6 +34,11 @@ class CerebroConversa {
         nome: 'elogio',
         padroes: [/voc[eê] (é|e) (legal|incr[íi]vel|top|show)/i, /gostei de voc[eê]/i],
         respostas: () => ['Obrigada! Cada treino me ajuda a ficar um pouco melhor. 🧠✨']
+      },
+      {
+        nome: 'quem_criou',
+        padroes: [/quem (te|lhe) criou/i, /quem (é|e) (seu|o) desenvolvedor/i, /quem (te|lhe) fez/i, /quem (te|lhe) programou/i],
+        respostas: () => [`Fui criada e treinada por Diamante Black oficial. Sou um projeto pessoal, feito do zero.`]
       }
     ];
   }
