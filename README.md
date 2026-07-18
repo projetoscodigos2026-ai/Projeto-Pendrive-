@@ -30,10 +30,10 @@ Escreva uma mensagem de commit (ex: "primeira versão da minha IA") e confirme.
 Ative o GitHub Pages (pra ter um link público onde ela roda de verdade)
 No repositório: Settings → Pages.
 Em "Branch", escolha main e pasta / (root), salve.
-Espere 1-2 minutos. O link vai aparecer no topo da mesma página (algo como https://seu-usuario.github.io/minha-ia/).
+Espere 1-2 minutos. O link vai aparecer no topo da mesma página (algo como https://projetoscodigos2026-ai.github.io/Projeto-Pendrive-/ ).
 Esse link já é sua IA funcionando, acessível de qualquer navegador.
 Para editar depois, sem precisar de computador
-Troque github.com por github.dev na URL do repositório (ex: github.dev/seu-usuario/minha-ia).
+Troque github.com por github.dev na URL do repositório (ex: github.dev/seu-usuario/minha-).
 Abre um VS Code completo no navegador do celular. Edite os arquivos, aperte Ctrl+S (ou o botão de salvar), depois vá no ícone de "Source Control" (os três pontinhos ramificados) pra fazer commit direto.
 Backup extra no pendrive
 Baixe os arquivos do GitHub (botão "Code" → "Download ZIP") de vez em quando.
